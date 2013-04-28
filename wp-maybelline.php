@@ -165,6 +165,12 @@ Class WP_Maybelline
 
 WP_Maybelline::init();
 
+
+if(!class_exists('WP_List_Table')){
+	require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
+}
+
+
 class WP_Maybelline_Frontend extends WP_Maybelline
 {
 	public static function init()
@@ -210,7 +216,7 @@ class WP_Maybelline_Frontend extends WP_Maybelline
 
 				case "user" : 
 					$user_id = $_REQUEST['user_id'];
-			
+	
 					$content = self::get_results_by_user($user_id);
 					self::generate_csv(self::format_csv($content));
 				break;
@@ -231,9 +237,120 @@ class WP_Maybelline_Frontend extends WP_Maybelline
 			<p>Maybelline is a tool used for seeing what your users are up to on your WordPress blog.</p>
 
 			<a href="<?php echo admin_url('tools.php?page=maybelline_admin&mayb_action=results'); ?>" class="button">Download all data</a>
+			
+			<p>User data is available here</p>
+			<?php  
+			$table  = new WP_Maybelline_List_User_Table();
+			$table->prepare_items();
+			$table->display('true');
+			?>
 		</div>
 		<?php
 	}
 }
 
 WP_Maybelline_Frontend::init();
+
+
+class WP_Maybelline_List_User_Table extends WP_List_Table 
+{
+	function __construct()
+	{
+		parent::__construct( array(
+		'singular'=> 'wp_list_text_link', //Singular label
+		'plural' => 'wp_list_test_links', //plural label, also this well be one of the table css class
+		'ajax'	=> false //We won't support Ajax for this table
+		) );
+	}
+
+	function get_columns() {
+		$columns = array(
+			'name'=>__('Name'),
+		);
+
+		return $columns;
+	}
+
+	function prepare_items() {
+		global $wpdb, $_wp_column_headers;
+		$screen = get_current_screen();
+
+    	$users = get_users();
+
+        $totalitems = count($users);
+
+        //How many to display per page?
+        $perpage = 5;
+
+        //Which page is this?
+        $paged = !empty($_GET["paged"]) ? mysql_real_escape_string($_GET["paged"]) : '';
+        
+        //Page Number
+        if(empty($paged) || !is_numeric($paged) || $paged<=0 ){ $paged=1; }
+        
+        //How many pages do we have in total?
+        $totalpages = ceil($totalitems/$perpage);
+
+        //adjust the query to take pagination into account
+	    if(!empty($paged) && !empty($perpage)){
+		    $offset=($paged-1)*$perpage;
+	    }
+
+	/* -- Register the pagination -- */
+		$this->set_pagination_args( array(
+			"total_items" => $totalitems,
+			"total_pages" => $totalpages,
+			"per_page" => $perpage,
+		) );
+		//The pagination links are automatically built according to those parameters
+
+		/* -- Register the Columns -- */
+		$columns = $this->get_columns();
+		$_wp_column_headers[$screen->id]=$columns;
+
+		$userargs = array(
+			'offset' => $offset
+		);
+
+		$users = get_users( $userargs );
+	/* -- Fetch the items -- */
+
+		$this->_column_headers = array( 
+	 		$this->get_columns(),		// columns
+	 		array(),			
+	 		array()
+		);
+		
+		$this->items = array($users[0]->data);
+	}
+
+	function display_rows() {
+		//Get the records registered in the prepare_items method
+		$records = $this->items;
+
+		$columns = $this->get_columns();
+  		
+  		$hidden = array();
+  		$sortable = array();
+  		$this->_column_headers = array($columns, $hidden, $sortable);
+
+
+		//Get the columns registered in the get_columns and get_sortable_columns methods
+		list( $columns, $hidden ) = $this->get_column_info();
+		
+		//Loop for each record
+		if( !empty($records) ) {
+
+			foreach($records as $rec){
+				//Open the line
+		        echo '<tr id="record_'.$rec->user_login.'">';
+		        echo '<td><a href="' . admin_url('tools.php?page=maybelline_admin&mayb_action=user&user_id=' . $rec->ID ) . '">'.stripslashes($rec->user_nicename).'</a></td>';
+
+				//Close the line
+				echo'</tr>';
+
+			}
+		}
+
+	}
+}
