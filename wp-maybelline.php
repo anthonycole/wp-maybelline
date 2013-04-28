@@ -282,26 +282,7 @@ class WP_Maybelline_List_User_Table extends WP_List_Table
         //How many to display per page?
         $perpage = 5;
 
-        //Which page is this?
-        $paged = !empty($_GET["paged"]) ? mysql_real_escape_string($_GET["paged"]) : '';
         
-        //Page Number
-        if(empty($paged) || !is_numeric($paged) || $paged<=0 ){ $paged=1; }
-        
-        //How many pages do we have in total?
-        $totalpages = ceil($totalitems/$perpage);
-
-        //adjust the query to take pagination into account
-	    if(!empty($paged) && !empty($perpage)){
-		    $offset=($paged-1)*$perpage;
-	    }
-
-	/* -- Register the pagination -- */
-		$this->set_pagination_args( array(
-			"total_items" => $totalitems,
-			"total_pages" => $totalpages,
-			"per_page" => $perpage,
-		) );
 		//The pagination links are automatically built according to those parameters
 
 		/* -- Register the Columns -- */
@@ -312,7 +293,7 @@ class WP_Maybelline_List_User_Table extends WP_List_Table
 			'offset' => $offset
 		);
 
-		$users = get_users( $userargs );
+		$users = get_users( );
 	/* -- Fetch the items -- */
 
 		$this->_column_headers = array( 
@@ -321,30 +302,21 @@ class WP_Maybelline_List_User_Table extends WP_List_Table
 	 		array()
 		);
 		
-		$this->items = array($users[0]->data);
+		$this->items = $users;
+
 	}
 
 	function display_rows() {
 		//Get the records registered in the prepare_items method
 		$records = $this->items;
-
-		$columns = $this->get_columns();
-  		
-  		$hidden = array();
-  		$sortable = array();
-  		$this->_column_headers = array($columns, $hidden, $sortable);
-
-
-		//Get the columns registered in the get_columns and get_sortable_columns methods
-		list( $columns, $hidden ) = $this->get_column_info();
 		
 		//Loop for each record
 		if( !empty($records) ) {
 
 			foreach($records as $rec){
 				//Open the line
-		        echo '<tr id="record_'.$rec->user_login.'">';
-		        echo '<td><a href="' . admin_url('tools.php?page=maybelline_admin&mayb_action=user&user_id=' . $rec->ID ) . '">'.stripslashes($rec->user_nicename).'</a></td>';
+		        echo '<tr id="record_'.$rec->data->user_login.'">';
+		        echo '<td><a href="' . admin_url('tools.php?page=maybelline_admin&mayb_action=user&user_id=' . $rec->data->ID ) . '">'.stripslashes($rec->user_nicename).'</a></td>';
 
 				//Close the line
 				echo'</tr>';
