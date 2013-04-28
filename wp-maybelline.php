@@ -62,7 +62,7 @@ Class WP_Maybelline
 			return true;
 
 		$post_types = array(
-			'post',
+			'page',
 			'document'
 		);
 
