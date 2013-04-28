@@ -66,9 +66,10 @@ Class WP_Maybelline
 			'document'
 		);
 
-		if(  $wp_query->is_single && in_array( $wp_query->post->post_type, $post_types ) ) 
+		if(  ( $wp_query->is_single  || $wp_query->is_page ) && in_array( $wp_query->post->post_type, $post_types ) ) 
 		{
 			self::log_view( get_current_user_id(), $wp_query->post->ID, '', $wp_query->post->post_type );
+			die("Found it!");
 		}
 	}
 
