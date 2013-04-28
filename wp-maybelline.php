@@ -69,7 +69,6 @@ Class WP_Maybelline
 		if(  ( $wp_query->is_single  || $wp_query->is_page ) && in_array( $wp_query->post->post_type, $post_types ) ) 
 		{
 			self::log_view( get_current_user_id(), $wp_query->post->ID, '', $wp_query->post->post_type );
-			die("Found it!");
 		}
 	}
 
@@ -161,7 +160,6 @@ Class WP_Maybelline
 		array_unshift($content, $header);
 		return $content;
 	}
-
 }
 
 WP_Maybelline::init();
@@ -182,7 +180,7 @@ class WP_Maybelline_Frontend extends WP_Maybelline
 
 	public static function add_page_menu()
 	{
-		add_submenu_page('tools.php', __('Maybelline', 'wp-maybelline'), __('Mayblline', 'wp-maybelline'), 'edit_posts', 'maybelline_admin', array(__CLASS__, 'page') );
+		add_submenu_page('tools.php', __('Maybelline', 'wp-maybelline'), __('Maybelline', 'wp-maybelline'), 'edit_posts', 'maybelline_admin', array(__CLASS__, 'page') );
 	}
 
 	public static function generate_csv($results)
