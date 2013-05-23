@@ -129,10 +129,10 @@ Class WP_Maybelline
 		do_action('wp_maybelline_get_post_views', $post_id);
 	}
 
-	public static function get_views_by_post_type()
+	public static function get_views_by_post_type($post_type)
 	{
 		global $wpdb;
-		$query = $wpdb->prepare("SELECT DISTINCT * FROM wp_maybelline WHERE post_id = %d LIMIT", $post_id, $limit );
+		$query = $wpdb->prepare("SELECT DISTINCT * FROM wp_maybelline WHERE post_type = %s LIMIT", $post_type, $limit );
 		$wpdb->get_results($query);
 		do_action('wp_maybelline_get_post_views', $post_id);
 	}
