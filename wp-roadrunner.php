@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Maybelline
+Plugin Name: RoadRunner
 Author: Anthony Cole
 Author URI: http://anthonycole.me/
 License: GPL V3
@@ -29,19 +29,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * @author anthonycole
  **/
 
-register_activation_hook(__FILE__, array('WP_Maybelline', 'install') );
+register_activation_hook(__FILE__, array('WP_RoadRunner', 'install') );
 
-Class WP_Maybelline 
+Class WP_RoadRunner 
 {
 	public static function init()
 	{
-
-		add_action('template_redirect', 'WP_Maybelline::listen');
+		add_action('template_redirect', 'WP_Roadrunner::listen');
 	}
 
 	public static function install()
 	{
-		$sql = "CREATE TABLE `wp_maybelline` (
+		$sql = "CREATE TABLE `wp_roadrunner` (
 			  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
 			  `user_id` int(11) DEFAULT NULL,
 			  `post_id` int(11) DEFAULT NULL,
@@ -63,12 +62,17 @@ Class WP_Maybelline
 
 		$post_types = array(
 			'page',
-			'document'
+			'document',
+			'video'
 		);
 
 		if(  ( $wp_query->is_single  || $wp_query->is_page ) && in_array( $wp_query->post->post_type, $post_types ) ) 
 		{
-			self::log_view( get_current_user_id(), $wp_query->post->ID, '', $wp_query->post->post_type );
+			if( isset($wp_query->is_page) && 'no' ) {
+				return true;
+			} else {
+				self::log_view( get_current_user_id(), $wp_query->post->ID, '', $wp_query->post->post_type );
+			}
 		}
 	}
 
@@ -98,9 +102,9 @@ Class WP_Maybelline
 			'%s'
 		);
 
-		$query = $wpdb->insert('wp_maybelline', $vals, $casting);
+		$query = $wpdb->insert('wp_roadrunner', $vals, $casting);
 
-		do_action('wp_maybelline_add_view');
+		do_action('wp_roadrunner_add_view');
 	}
 
 	/**
@@ -111,9 +115,9 @@ Class WP_Maybelline
 	 **/
 	public static function get_views_by_user($user_id, $limit = 5) {
 		global $wpdb;
-		$query = $wpdb->prepare("SELECT DISTINCT * FROM wp_maybelline WHERE user_id = %d LIMIT", $user_id, $limit );
+		$query = $wpdb->prepare("SELECT DISTINCT * FROM wp_roadrunner WHERE user_id = %d LIMIT", $user_id, $limit );
 		$wpdb->get_results($query);
-		do_action('wp_maybelline_get_user_views', $user_id);
+		do_action('wp_roadrunner_get_user_views', $user_id);
 	}
 	
 	/**
@@ -124,23 +128,23 @@ Class WP_Maybelline
 	 **/
 	public static function get_views_by_post($post_id) {
 		global $wpdb;
-		$query = $wpdb->prepare("SELECT DISTINCT * FROM wp_maybelline WHERE post_id = %d LIMIT", $post_id, $limit );
+		$query = $wpdb->prepare("SELECT DISTINCT * FROM wp_roadrunner WHERE post_id = %d LIMIT", $post_id, $limit );
 		$wpdb->get_results($query);
-		do_action('wp_maybelline_get_post_views', $post_id);
+		do_action('wp_roadrunner_get_post_views', $post_id);
 	}
 
 	public static function get_views_by_post_type($post_type)
 	{
 		global $wpdb;
-		$query = $wpdb->prepare("SELECT DISTINCT * FROM wp_maybelline WHERE post_type = %s LIMIT", $post_type, $limit );
+		$query = $wpdb->prepare("SELECT DISTINCT * FROM wp_roadrunner WHERE post_type = %s LIMIT", $post_type, $limit );
 		$wpdb->get_results($query);
-		do_action('wp_maybelline_get_post_views', $post_id);
+		do_action('wp_roadrunner_get_post_views', $post_id);
 	}
 
 	public static function get_results()
 	{
 		global $wpdb;	
-		$query = "SELECT user_id, post_id, wp_posts.post_title, timestamp FROM wp_maybelline LEFT JOIN wp_posts ON wp_posts.ID = wp_maybelline.post_id";
+		$query = "SELECT user_id, post_id, wp_posts.post_title, timestamp FROM wp_roadrunner LEFT JOIN wp_posts ON wp_posts.ID = wp_roadrunner.post_id";
 		$dbresults = $wpdb->get_results($query, ARRAY_N);
 		return $dbresults;
 	}
@@ -148,7 +152,7 @@ Class WP_Maybelline
 	public static function get_results_by_user($user_id)
 	{
 		global $wpdb;
-		$query = "SELECT user_id, post_id, wp_posts.post_title, timestamp FROM wp_maybelline INNER JOIN wp_posts ON wp_posts.ID = wp_maybelline.post_id AND wp_maybelline.user_id = %d";
+		$query = "SELECT user_id, post_id, wp_posts.post_title, timestamp FROM wp_roadrunner INNER JOIN wp_posts ON wp_posts.ID = wp_roadrunner.post_id AND wp_roadrunner.user_id = %d";
 		$dbresults = $wpdb->get_results($wpdb->prepare( $query, $user_id ), ARRAY_N);
 
 		return $dbresults;
@@ -180,7 +184,7 @@ class WP_Maybelline_Frontend extends WP_Maybelline
 
 	public static function add_page_menu()
 	{
-		add_submenu_page('tools.php', __('Maybelline', 'wp-maybelline'), __('Maybelline', 'wp-maybelline'), 'edit_posts', 'maybelline_admin', array(__CLASS__, 'page') );
+		add_submenu_page('tools.php', __('RoadRunner', 'wp-roadrunner'), __('RoadRunner', 'wp-roadrunner'), 'edit_posts', 'roadrunner_admin', array(__CLASS__, 'page') );
 	}
 
 	public static function generate_csv($results)
@@ -205,9 +209,9 @@ class WP_Maybelline_Frontend extends WP_Maybelline
 
 	public static function listen()
 	{
-		if( isset( $_GET['page'] ) && 'maybelline_admin' ==  $_GET['page'] && isset($_REQUEST['mayb_action'])  )   
+		if( isset( $_GET['page'] ) && 'roadrunner_admin' ==  $_GET['page'] && isset($_REQUEST['roadr_action'])  )   
 		{
-			switch( $_REQUEST['mayb_action'] ) :
+			switch( $_REQUEST['roadr_action'] ) :
 				case "results" : 
 					$content = self::get_results();
 					self::generate_csv(self::format_csv($content));
@@ -232,12 +236,12 @@ class WP_Maybelline_Frontend extends WP_Maybelline
 	{
 		?>
 		<div class="wrap">
-			<h2>Maybelline</h2>
-			<p>Maybelline is a tool used for seeing what your users are up to on your WordPress blog.</p>
+			<h2>RoadRunner</h2>
+			<p>RoadRunner is a tool for seeing what your users are up to on your WordPress site.</p>
 
-			<a href="<?php echo admin_url('tools.php?page=maybelline_admin&mayb_action=results'); ?>" class="button">Download all data</a>
+			<a href="<?php echo admin_url('tools.php?page=roadrunner_admin&mayb_action=results'); ?>" class="button">Download all data</a>
 			
-			<p>User data is available here</p>
+			<p>User data.</p>
 			<?php  
 			$table  = new WP_Maybelline_List_User_Table();
 			$table->prepare_items();
@@ -248,10 +252,10 @@ class WP_Maybelline_Frontend extends WP_Maybelline
 	}
 }
 
-WP_Maybelline_Frontend::init();
+WP_RoadRunner_Frontend::init();
 
 
-class WP_Maybelline_List_User_Table extends WP_List_Table 
+class WP_RoadRunner_List_User_Table extends WP_List_Table 
 {
 	function __construct()
 	{
@@ -315,7 +319,7 @@ class WP_Maybelline_List_User_Table extends WP_List_Table
 			foreach($records as $rec){
 				//Open the line
 		        echo '<tr id="record_'.$rec->data->user_login.'">';
-		        echo '<td><a href="' . admin_url('tools.php?page=maybelline_admin&mayb_action=user&user_id=' . $rec->data->ID ) . '">'.stripslashes($rec->user_nicename).'</a></td>';
+		        echo '<td><a href="' . admin_url('tools.php?page=roadrunner_admin&roadr_action=user&user_id=' . $rec->data->ID ) . '">'.stripslashes($rec->user_nicename).'</a></td>';
 
 				//Close the line
 				echo'</tr>';
